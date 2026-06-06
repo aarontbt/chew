@@ -47,7 +47,14 @@ site/
 
 ## Scroll-scrubbed video
 
-The core interaction is a transparent alpha `.webm` video (`assets/chew-2.webm`) scrubbed by scroll progress. Three video instances handle different layout layers: hero float, handoff overlay, and sticky scrub position.
+The core interaction is a transparent alpha product video scrubbed by scroll progress. The site uses:
+
+| Browser path | Asset |
+|---|---|
+| Desktop/non-iOS | `assets/chew-2-500-alpha.webm` |
+| iPhone/iPad/WebKit touch browsers | `assets/chew-2-500-alpha.mov` |
+
+Video tags use `data-src` and `data-ios-src`; `script.js` chooses the correct source before loading so mobile Safari/Chrome does not accidentally fetch the WebM alpha file.
 
 Key constants in `script.js`:
 
@@ -56,6 +63,62 @@ Key constants in `script.js`:
 | `IDLE_PREVIEW_END` | `0.9s` | End of idle float loop at load |
 | `SPIN_END` | `4s` | End of hero scroll phase |
 | `BREAK_END` | `9.35s` | End of inside section scrub |
+
+---
+
+## Product video encoding
+
+The source master is `assets/chew-2.webm` (1080x1080 VP9 with alpha). Rebuild the 500x500 all-keyframe WebM with:
+
+```bash
+ffmpeg -y \
+  -c:v libvpx-vp9 -i assets/chew-2.webm \
+  -an \
+  -vf "scale=500:500:flags=lanczos" \
+  -c:v libvpx-vp9 \
+  -pix_fmt yuva420p \
+  -b:v 0 \
+  -crf 34 \
+  -g 1 \
+  -row-mt 1 \
+  -auto-alt-ref 0 \
+  assets/chew-2-500-alpha.webm
+```
+
+For iOS, use Apple `avconvert` from a ProRes 4444 alpha intermediate. FFmpeg `hevc_videotoolbox` may output plain HEVC even when alpha flags are accepted.
+
+```bash
+find /tmp -maxdepth 1 -name 'chew-frames-500-*.png' -delete
+
+ffmpeg -y \
+  -c:v libvpx-vp9 -i assets/chew-2.webm \
+  -an \
+  -vf "scale=500:500:flags=lanczos" \
+  -frames:v 240 \
+  /tmp/chew-frames-500-%04d.png
+
+ffmpeg -y \
+  -framerate 24 \
+  -i /tmp/chew-frames-500-%04d.png \
+  -c:v prores_ks \
+  -profile:v 4444 \
+  -pix_fmt yuva444p10le \
+  -vendor apl0 \
+  /tmp/chew-2-500-prores4444.mov
+
+avconvert \
+  --source /tmp/chew-2-500-prores4444.mov \
+  --preset PresetHEVCHighestQualityWithAlpha \
+  --output assets/chew-2-500-alpha.mov \
+  --replace \
+  --progress
+```
+
+Verify the iOS file reports `HEVC with Alpha`:
+
+```bash
+mdls -name kMDItemCodecs -name kMDItemPixelWidth -name kMDItemPixelHeight assets/chew-2-500-alpha.mov
+```
 
 ---
 

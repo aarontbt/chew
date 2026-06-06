@@ -24,7 +24,7 @@ const CONFIG = {
 
   // Product size & position (used in every gsap.set on .handoff-video)
   productScale: 0.8,
-  mobileProductScale: 1,
+  mobileProductScale: 0.8,
   productY: "9vh",
   mobileProductY: "-2vh",
   lenisSmoothLerp: 0.12,
@@ -122,9 +122,12 @@ function syncVideoToProgress(video, progress, startTime = 0.01, endTime = null, 
 
 function setupVideo(video) {
   if (!video) return;
+  const webSrc = video.dataset.src;
   const iosSrc = video.dataset.iosSrc;
-  if (iosSrc && isAppleTouchBrowser()) {
-    video.src = iosSrc;
+  const nextSrc = iosSrc && isAppleTouchBrowser() ? iosSrc : webSrc;
+  if (nextSrc && video.getAttribute("src") !== nextSrc) {
+    video.setAttribute("src", nextSrc);
+    video.load();
   }
   video.muted = true;
   video.playsInline = true;
@@ -241,7 +244,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     });
   });
 
-  if (window.fetch && handoffVideo) {
+  if (window.fetch && handoffVideo && !isAppleTouchBrowser()) {
     const source = handoffVideo.currentSrc || handoffVideo.src;
     setTimeout(() => {
       fetch(source)

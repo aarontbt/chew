@@ -15,7 +15,6 @@ const insideSection = document.querySelector(".inside-section");
 const heroSection = document.querySelector(".hero");
 const chapterCards = Array.from(document.querySelectorAll("[data-chapter]"));
 const proofNumbers = Array.from(document.querySelectorAll("[data-count]"));
-const mobileCta = document.querySelector(".mobile-sticky-cta");
 
 const CONFIG = {
   // Video phase timestamps (seconds) — adjust when video asset changes
@@ -35,7 +34,6 @@ const CONFIG = {
   revealStart: "top 85%",
   proofStart: "top 78%",
   groupStart: "top 82%",
-  mobileCtaStart: "top 70%",
 };
 
 const bufferedVideoTargets = new Map();
@@ -413,14 +411,6 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     scrollTrigger: { trigger: ".benefits", start: CONFIG.groupStart },
   });
 
-  ScrollTrigger.create({
-    trigger: "#club",
-    start: CONFIG.mobileCtaStart,
-    endTrigger: ".site-footer",
-    end: "top bottom",
-    onEnter: () => mobileCta?.classList.add("is-visible"),
-    onLeaveBack: () => mobileCta?.classList.remove("is-visible"),
-  });
 } else {
   document.body.classList.add("no-scroll-smooth");
   chapterCards.forEach((card) => {

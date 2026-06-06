@@ -1106,31 +1106,6 @@ blockquote {
   color: rgba(255, 241, 230, 0.45);
 }
 
-.mobile-sticky-cta {
-  position: fixed;
-  left: 16px;
-  right: 16px;
-  bottom: 14px;
-  z-index: 35;
-  display: none;
-  min-height: 52px;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--pill-radius);
-  background: var(--espresso);
-  color: var(--cream);
-  font-size: 13px;
-  font-weight: 900;
-  text-transform: uppercase;
-  box-shadow: 0 12px 30px rgba(43, 30, 22, 0.25);
-  transform: translateY(90px);
-  transition: transform 220ms ease;
-}
-
-.mobile-sticky-cta.is-visible {
-  transform: translateY(0);
-}
-
 @media (max-width: 900px) {
   .site-header {
     grid-template-columns: auto 1fr auto auto;
@@ -1362,9 +1337,6 @@ blockquote {
     max-height: none;
   }
 
-  .mobile-sticky-cta {
-    display: flex;
-  }
 }
 
 @media (max-width: 560px) {
@@ -1425,6 +1397,19 @@ blockquote {
     top: 72%;
     width: calc(100vw - 44px);
     padding: 22px;
+  }
+
+  .member-pill {
+    gap: 9px;
+    padding: 14px 18px;
+    font-size: clamp(16px, 4.7vw, 18px);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .member-dot {
+    width: 9px;
+    height: 9px;
   }
 
   .benefits {

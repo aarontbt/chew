@@ -25,7 +25,9 @@ const CONFIG = {
 
   // Product size & position (used in every gsap.set on .handoff-video)
   productScale: 0.8,
+  mobileProductScale: 1,
   productY: "9vh",
+  mobileProductY: "-2vh",
   lenisSmoothLerp: 0.12,
   heroScrub: 1.1,
 
@@ -38,6 +40,13 @@ const CONFIG = {
 
 const bufferedVideoTargets = new Map();
 const isNarrowViewport = () => window.matchMedia("(max-width: 900px)").matches;
+const getProductY = () => (isNarrowViewport() ? CONFIG.mobileProductY : CONFIG.productY);
+const getInsideProgressScale = (progress) => {
+  if (!isNarrowViewport()) return CONFIG.productScale;
+  const scaleProgress = Math.min(1, Math.max(0, progress / 0.16));
+  const easedProgress = scaleProgress * scaleProgress * (3 - 2 * scaleProgress);
+  return CONFIG.productScale + (CONFIG.mobileProductScale - CONFIG.productScale) * easedProgress;
+};
 
 function once(el, event, fn, opts) {
   const onceFn = function (...args) {
@@ -249,7 +258,9 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
         start: "top top",
         end: "bottom top",
         scrub: CONFIG.heroScrub,
+        invalidateOnRefresh: true,
         onUpdate: (self) => {
+          if (self.direction === -1) bufferedVideoTargets.delete(handoffVideo);
           syncVideoToProgress(handoffVideo, self.progress, 0.01, CONFIG.spinEnd, {
             correction: 0.18,
             lead: 0.08,
@@ -265,13 +276,13 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
       ".handoff-video",
       {
         x: () => (isNarrowViewport() ? "0vw" : "22vw"),
-        y: () => (isNarrowViewport() ? "12vh" : "7vh"),
+        y: () => (isNarrowViewport() ? "15vh" : "7vh"),
         scale: CONFIG.productScale,
         filter: "drop-shadow(0 26px 42px rgba(43, 30, 22, 0.18))",
       },
       {
         x: 0,
-        y: CONFIG.productY,
+        y: getProductY,
         scale: CONFIG.productScale,
         filter: "drop-shadow(0 34px 56px rgba(43, 30, 22, 0.2))",
         duration: 0.82,
@@ -292,7 +303,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     end: "bottom bottom",
     onEnter: () => {
       if (handoffVideo) handoffVideo.currentTime = CONFIG.spinEnd;
-      gsap.set(".handoff-video", { scale: CONFIG.productScale, y: CONFIG.productY });
+      gsap.set(".handoff-video", { scale: getInsideProgressScale(0), y: getProductY() });
       syncVideoToProgress(handoffVideo, 0, CONFIG.spinEnd, CONFIG.breakEnd, {
         correction: 1,
         lead: 0,
@@ -316,7 +327,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     },
     onUpdate: (self) => {
       const progress = Math.min(1, Math.max(0, self.progress));
-      gsap.set(".handoff-video", { scale: CONFIG.productScale, y: CONFIG.productY });
+      gsap.set(".handoff-video", { scale: getInsideProgressScale(progress), y: getProductY() });
       const isBackward = self.direction === -1;
       syncVideoToProgress(handoffVideo, progress, CONFIG.spinEnd, CONFIG.breakEnd, {
         correction: isBackward ? 0.55 : 0.32,

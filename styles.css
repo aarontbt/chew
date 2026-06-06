@@ -1222,20 +1222,26 @@ blockquote {
     padding-top: 128px;
   }
 
+  .handoff-video {
+    max-height: 64svh;
+  }
+
   .scrub-video {
-    width: min(122vw, 680px);
+    width: min(112vw, 620px);
     max-height: 62svh;
   }
 
   .chapter-stack {
-    min-height: 68svh;
+    min-height: 76svh;
   }
 
   .chapter-card {
-    left: auto;
+    left: 0;
     right: 0;
-    top: 50%;
+    top: 70%;
     bottom: auto;
+    width: min(360px, calc(100vw - 44px));
+    margin: 0 auto;
     translate: 0 -50%;
     transform: translateY(30px);
   }
@@ -1408,6 +1414,17 @@ blockquote {
 
   .inside-intro h2 {
     font-size: 42px;
+  }
+
+  .chapter-stack {
+    width: 100%;
+    min-height: 78svh;
+  }
+
+  .chapter-card {
+    top: 72%;
+    width: calc(100vw - 44px);
+    padding: 22px;
   }
 
   .benefits {

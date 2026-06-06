@@ -38,6 +38,9 @@ const CONFIG = {
 
 const bufferedVideoTargets = new Map();
 const isNarrowViewport = () => window.matchMedia("(max-width: 900px)").matches;
+const isAppleTouchBrowser = () =>
+  /iP(ad|hone|od)/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const getProductY = () => (isNarrowViewport() ? CONFIG.mobileProductY : CONFIG.productY);
 const getInsideProgressScale = (progress) => {
   if (!isNarrowViewport()) return CONFIG.productScale;
@@ -119,6 +122,10 @@ function syncVideoToProgress(video, progress, startTime = 0.01, endTime = null, 
 
 function setupVideo(video) {
   if (!video) return;
+  const iosSrc = video.dataset.iosSrc;
+  if (iosSrc && isAppleTouchBrowser()) {
+    video.src = iosSrc;
+  }
   video.muted = true;
   video.playsInline = true;
   video.pause();
@@ -274,7 +281,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
       ".handoff-video",
       {
         x: () => (isNarrowViewport() ? "0vw" : "22vw"),
-        y: () => (isNarrowViewport() ? "15vh" : "7vh"),
+        y: () => (isNarrowViewport() ? "18vh" : "7vh"),
         scale: CONFIG.productScale,
         filter: "drop-shadow(0 26px 42px rgba(43, 30, 22, 0.18))",
       },

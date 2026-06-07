@@ -339,15 +339,23 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
   }
 
   let initialHandoffGlowAnchored = false;
+  let mobileHeroHandoffPosition = null;
+
+  function applyMobileHeroHandoffPosition() {
+    if (!isNarrowViewport() || !mobileHeroHandoffPosition) return false;
+    gsap.set(".handoff-video", mobileHeroHandoffPosition);
+    return true;
+  }
 
   function anchorHandoffToGlowOnce() {
     if (initialHandoffGlowAnchored || !isNarrowViewport() || window.scrollY > 8) return;
     initialHandoffGlowAnchored = true;
-    gsap.set(".handoff-video", {
+    mobileHeroHandoffPosition = {
       x: getHeroProductX(),
       y: getHeroProductY(),
       scale: getProductScale(),
-    });
+    };
+    gsap.set(".handoff-video", mobileHeroHandoffPosition);
   }
 
   function restoreMobileHeroStartState() {
@@ -358,11 +366,13 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     }
     restoreHeroGlow();
     gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
-    gsap.set(".handoff-video", {
-      x: getHeroTimelineStartX(),
-      y: getHeroTimelineStartY(),
-      scale: getProductScale(),
-    });
+    if (!applyMobileHeroHandoffPosition()) {
+      gsap.set(".handoff-video", {
+        x: getHeroTimelineStartX(),
+        y: getHeroTimelineStartY(),
+        scale: getProductScale(),
+      });
+    }
   }
 
   function restoreHeroStartIfAtTop() {
@@ -487,6 +497,14 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
           }
           if (isNarrowViewport()) {
             gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+            if (
+              !insideScrollTrigger?.isActive &&
+              self.direction === -1 &&
+              mobileHeroHandoffPosition &&
+              self.progress <= 0.12
+            ) {
+              gsap.set(".handoff-video", mobileHeroHandoffPosition);
+            }
             if (self.progress <= 0.02) {
               restoreMobileHeroStartState();
             }
@@ -560,11 +578,13 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     onLeaveBack: () => {
       bufferedVideoTargets.delete(handoffVideo);
       if (handoffVideo) handoffVideo.currentTime = CONFIG.spinEnd;
-      gsap.set(".handoff-video", {
-        x: getHeroHandoffEndX(),
-        y: getHeroHandoffEndY(),
-        scale: getProductScale(),
-      });
+      if (!applyMobileHeroHandoffPosition()) {
+        gsap.set(".handoff-video", {
+          x: getHeroHandoffEndX(),
+          y: getHeroHandoffEndY(),
+          scale: getProductScale(),
+        });
+      }
       updateProductHandoffVisibility();
     },
     onLeave: () => {
@@ -680,11 +700,13 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
       restoreHeroGlow();
     }
     if (heroProgress <= 0.001) {
-      gsap.set(".handoff-video", {
-        x: getHeroTimelineStartX(),
-        scale: getProductScale(),
-        y: getHeroTimelineStartY(),
-      });
+      if (!applyMobileHeroHandoffPosition()) {
+        gsap.set(".handoff-video", {
+          x: getHeroTimelineStartX(),
+          scale: getProductScale(),
+          y: getHeroTimelineStartY(),
+        });
+      }
     }
   }
 

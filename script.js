@@ -28,9 +28,10 @@ const CONFIG = {
 
   // Product size & position (.handoff-video — desktop uses productScale, mobile ≤900px uses mobileProductScale)
   productScale: 1.0,
-  mobileProductScale: 0.9,
+  mobileProductScale: 0.8,
   productY: "9vh",
-  mobileProductY: "-2vh",
+  mobileProductY: "15vh",
+  mobileInsideProductY: "-2vh",
   lenisSmoothLerp: 0.12,
   heroScrub: 1.1,
 
@@ -46,19 +47,34 @@ const isAppleTouchBrowser = () =>
   /iP(ad|hone|od)/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const getProductY = () => (isNarrowViewport() ? CONFIG.mobileProductY : CONFIG.productY);
+const getInsideProductY = () =>
+  isNarrowViewport() ? CONFIG.mobileInsideProductY : CONFIG.productY;
 const getProductScale = () => (isNarrowViewport() ? CONFIG.mobileProductScale : CONFIG.productScale);
 const getHeroScrub = () => (isNarrowViewport() ? true : CONFIG.heroScrub);
 const getHeroProductAxisOffset = (axis, fallback) => {
   if (!heroGlow) return fallback;
   const rect = heroGlow.getBoundingClientRect();
   if (!rect.width || !rect.height) return fallback;
+  if (rect.bottom < -40 || rect.top > window.innerHeight + 40) return fallback;
   const center = axis === "x" ? rect.left + rect.width / 2 : rect.top + rect.height / 2;
   const viewportCenter = axis === "x" ? window.innerWidth / 2 : window.innerHeight / 2;
   return `${Math.round(center - viewportCenter)}px`;
 };
-const getHeroProductX = () => getHeroProductAxisOffset("x", isNarrowViewport() ? "0vw" : "22vw");
+const getHeroProductX = () => {
+  if (isNarrowViewport()) return getHeroProductAxisOffset("x", "0px");
+  return getHeroProductAxisOffset("x", "22vw");
+};
 const getHeroProductY = () => {
-  return getHeroProductAxisOffset("y", isNarrowViewport() ? CONFIG.mobileProductY : "7vh");
+  if (isNarrowViewport()) return getHeroProductAxisOffset("y", CONFIG.mobileProductY);
+  return getHeroProductAxisOffset("y", "7vh");
+};
+const getHeroHandoffEndY = () => getProductY();
+const getHeroHandoffEndX = () => 0;
+const getHeroTimelineStartX = () => (isNarrowViewport() ? 0 : getHeroProductX());
+const getHeroTimelineStartY = () =>
+  isNarrowViewport() ? CONFIG.mobileProductY : getHeroProductY();
+const lockHandoffAtInsideCenter = () => {
+  gsap.set(".handoff-video", { x: 0, y: getInsideProductY(), scale: getProductScale() });
 };
 
 function once(el, event, fn, opts) {
@@ -294,6 +310,8 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
   let lenis = null;
   let insideScrollTrigger = null;
   let resizeRefreshTimer = 0;
+  let handoffFadeTween = null;
+  let handoffShown = true;
 
   if (LenisCtor) {
     lenis = new LenisCtor({
@@ -316,13 +334,15 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     priority: 0,
   });
 
-  function restoreMobileHeroStartState() {
-    if (!isNarrowViewport() || window.scrollY > 8) return;
-    if (heroHandoffTimeline.scrollTrigger?.progress <= 0.02) {
-      heroHandoffTimeline.invalidate();
-      heroHandoffTimeline.progress(0);
-    }
-    gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+  function restoreHeroGlow() {
+    gsap.set(".hero-glow", { autoAlpha: 1, opacity: 0.62 });
+  }
+
+  let initialHandoffGlowAnchored = false;
+
+  function anchorHandoffToGlowOnce() {
+    if (initialHandoffGlowAnchored || !isNarrowViewport() || window.scrollY > 8) return;
+    initialHandoffGlowAnchored = true;
     gsap.set(".handoff-video", {
       x: getHeroProductX(),
       y: getHeroProductY(),
@@ -330,19 +350,99 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     });
   }
 
-  function updateMobileHeroHandoffVisibility() {
-    if (!handoffProduct || !heroSection) return;
-    if (!isNarrowViewport()) {
+  function restoreMobileHeroStartState() {
+    if (!isNarrowViewport() || window.scrollY > 8) return;
+    if (heroHandoffTimeline.scrollTrigger?.progress <= 0.02) {
+      heroHandoffTimeline.invalidate();
+      heroHandoffTimeline.progress(0);
+    }
+    restoreHeroGlow();
+    gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+    gsap.set(".handoff-video", {
+      x: getHeroTimelineStartX(),
+      y: getHeroTimelineStartY(),
+      scale: getProductScale(),
+    });
+  }
+
+  function restoreHeroStartIfAtTop() {
+    if (window.scrollY > 24) return;
+    const heroProgress = heroHandoffTimeline.scrollTrigger?.progress ?? 1;
+    if (heroProgress <= 0.12) {
+      restoreHeroGlow();
+    }
+    if (isNarrowViewport()) {
+      restoreMobileHeroStartState();
+    }
+  }
+
+  function setHandoffVisible(immediate = true) {
+    handoffFadeTween?.kill();
+    handoffFadeTween = null;
+    handoffShown = true;
+    if (immediate) {
       gsap.set(handoffProduct, { autoAlpha: 1, visibility: "visible" });
       return;
     }
-
-    const heroBottom = heroSection.offsetTop + heroSection.offsetHeight;
-    const isInsideHero = window.scrollY < heroBottom - 12;
-    gsap.set(handoffProduct, {
-      autoAlpha: isInsideHero ? 0 : 1,
-      visibility: isInsideHero ? "hidden" : "visible",
+    handoffFadeTween = gsap.to(handoffProduct, {
+      autoAlpha: 1,
+      duration: 0.28,
+      ease: "power2.out",
+      onStart: () => gsap.set(handoffProduct, { visibility: "visible" }),
+      onComplete: () => {
+        handoffFadeTween = null;
+      },
     });
+  }
+
+  function fadeHandoffOut() {
+    if (!handoffShown) return;
+    handoffFadeTween?.kill();
+    handoffFadeTween = null;
+    handoffShown = false;
+    handoffFadeTween = gsap.to(handoffProduct, {
+      autoAlpha: 0,
+      duration: 0.32,
+      ease: "power2.out",
+      onComplete: () => {
+        gsap.set(handoffProduct, { visibility: "hidden" });
+        handoffFadeTween = null;
+      },
+    });
+  }
+
+  function updateProductHandoffVisibility() {
+    const heroProgress = heroHandoffTimeline.scrollTrigger?.progress ?? 0;
+    const insideActive = insideScrollTrigger?.isActive ?? false;
+    const insideProgress = insideScrollTrigger?.progress ?? 0;
+    const handoffComplete = heroProgress >= 0.995;
+    const insideBottom = insideSection.offsetTop + insideSection.offsetHeight;
+    const pastInside =
+      (!insideActive && insideProgress >= 0.999) || window.scrollY >= insideBottom - 24;
+    const showHandoff = !pastInside;
+
+    gsap.set(".scrub-stage", { opacity: 0, visibility: "hidden" });
+
+    if (showHandoff) {
+      if (handoffFadeTween) {
+        setHandoffVisible(false);
+      } else if (!handoffShown) {
+        setHandoffVisible(true);
+      }
+      if (insideActive && handoffComplete) {
+        const leavingInsideUp =
+          insideScrollTrigger?.direction === -1 && insideProgress < 0.08;
+        if (!leavingInsideUp) {
+          lockHandoffAtInsideCenter();
+        }
+      }
+    } else {
+      fadeHandoffOut();
+    }
+  }
+
+  function getInsideSectionVideo() {
+    return handoffVideo;
   }
 
   once(document.documentElement, "touchstart", () => {
@@ -381,37 +481,42 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
         scrub: getHeroScrub(),
         invalidateOnRefresh: true,
         onUpdate: (self) => {
+          updateProductHandoffVisibility();
+          if (self.progress <= 0.08) {
+            restoreHeroGlow();
+          }
           if (isNarrowViewport()) {
             gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
-            updateMobileHeroHandoffVisibility();
             if (self.progress <= 0.02) {
               restoreMobileHeroStartState();
             }
           }
           if (self.direction === -1) bufferedVideoTargets.delete(handoffVideo);
-          syncVideoToProgress(handoffVideo, self.progress, 0.01, CONFIG.spinEnd, {
-            correction: 0.18,
-            lead: 0.08,
-            minRate: 0.45,
-            maxRate: 1.35,
-            priority: 1,
-            directionOverride: self.direction,
-          });
+          if (!insideScrollTrigger?.isActive) {
+            syncVideoToProgress(handoffVideo, self.progress, 0.01, CONFIG.spinEnd, {
+              correction: isNarrowViewport() ? 0.28 : 0.18,
+              lead: isNarrowViewport() ? 0 : 0.08,
+              minRate: 0.45,
+              maxRate: 1.35,
+              priority: 1,
+              directionOverride: self.direction,
+            });
+          }
         },
-        onScrubComplete: restoreMobileHeroStartState,
+        onScrubComplete: restoreHeroStartIfAtTop,
       },
     })
     .fromTo(
       ".handoff-video",
       {
-        x: getHeroProductX,
-        y: getHeroProductY,
+        x: getHeroTimelineStartX,
+        y: getHeroTimelineStartY,
         scale: getProductScale,
         filter: "drop-shadow(0 26px 42px rgba(43, 30, 22, 0.18))",
       },
       {
-        x: 0,
-        y: getProductY,
+        x: getHeroHandoffEndX,
+        y: getHeroHandoffEndY,
         scale: getProductScale,
         filter: "drop-shadow(0 34px 56px rgba(43, 30, 22, 0.2))",
         duration: 0.82,
@@ -434,9 +539,10 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     start: "top top",
     end: "bottom bottom",
     onEnter: () => {
-      if (handoffVideo) handoffVideo.currentTime = CONFIG.spinEnd;
-      gsap.set(".handoff-video", { scale: getProductScale(), y: getProductY() });
-      syncVideoToProgress(handoffVideo, 0, CONFIG.spinEnd, CONFIG.breakEnd, {
+      const video = getInsideSectionVideo();
+      if (video) video.currentTime = CONFIG.spinEnd;
+      updateProductHandoffVisibility();
+      syncVideoToProgress(video, 0, CONFIG.spinEnd, CONFIG.breakEnd, {
         correction: 1,
         lead: 0,
         minRate: 1,
@@ -445,23 +551,31 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
         priority: 2,
         directionOverride: 1,
       });
-      gsap.set(handoffProduct, { autoAlpha: 1, visibility: "visible" });
     },
     onEnterBack: () => {
-      if (handoffVideo) handoffVideo.currentTime = CONFIG.breakEnd - 0.05;
-      gsap.set(handoffProduct, { autoAlpha: 1, visibility: "visible" });
+      const video = getInsideSectionVideo();
+      if (video) video.currentTime = CONFIG.breakEnd - 0.05;
+      updateProductHandoffVisibility();
     },
     onLeaveBack: () => {
-      gsap.set(handoffProduct, { autoAlpha: 1, visibility: "visible" });
+      bufferedVideoTargets.delete(handoffVideo);
+      if (handoffVideo) handoffVideo.currentTime = CONFIG.spinEnd;
+      gsap.set(".handoff-video", {
+        x: getHeroHandoffEndX(),
+        y: getHeroHandoffEndY(),
+        scale: getProductScale(),
+      });
+      updateProductHandoffVisibility();
     },
     onLeave: () => {
-      gsap.to(handoffProduct, { autoAlpha: 0, duration: 0.22, ease: "none" });
+      updateProductHandoffVisibility();
     },
     onUpdate: (self) => {
+      updateProductHandoffVisibility();
       const progress = Math.min(1, Math.max(0, self.progress));
-      gsap.set(".handoff-video", { scale: getProductScale(), y: getProductY() });
       const isBackward = self.direction === -1;
-      syncVideoToProgress(handoffVideo, progress, CONFIG.spinEnd, CONFIG.breakEnd, {
+      const video = getInsideSectionVideo();
+      syncVideoToProgress(video, progress, CONFIG.spinEnd, CONFIG.breakEnd, {
         correction: isBackward ? 0.55 : 0.32,
         lead: 0,
         minRate: 0.95,
@@ -550,15 +664,11 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     ScrollTrigger.refresh(true);
     if (isNarrowViewport()) {
       gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
-      updateMobileHeroHandoffVisibility();
+      updateProductHandoffVisibility();
     }
 
     if (insideScrollTrigger?.isActive) {
-      gsap.set(".handoff-video", {
-        x: 0,
-        scale: getProductScale(),
-        y: getProductY(),
-      });
+      updateProductHandoffVisibility();
       updateChapterCards(insideScrollTrigger.progress);
       return;
     }
@@ -566,11 +676,14 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     const heroProgress = heroHandoffTimeline.scrollTrigger?.progress ?? 0;
     heroHandoffTimeline.invalidate();
     heroHandoffTimeline.progress(heroProgress);
+    if (heroProgress <= 0.08) {
+      restoreHeroGlow();
+    }
     if (heroProgress <= 0.001) {
       gsap.set(".handoff-video", {
-        x: getHeroProductX(),
+        x: getHeroTimelineStartX(),
         scale: getProductScale(),
-        y: getHeroProductY(),
+        y: getHeroTimelineStartY(),
       });
     }
   }
@@ -582,16 +695,17 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
 
   window.addEventListener("resize", scheduleProductLayoutRefresh, { passive: true });
   window.addEventListener("orientationchange", scheduleProductLayoutRefresh, { passive: true });
-  window.addEventListener("scroll", restoreMobileHeroStartState, { passive: true });
-  window.addEventListener("scroll", updateMobileHeroHandoffVisibility, { passive: true });
+  window.addEventListener("scroll", restoreHeroStartIfAtTop, { passive: true });
+  window.addEventListener("scroll", updateProductHandoffVisibility, { passive: true });
   window.matchMedia("(max-width: 900px)").addEventListener("change", scheduleProductLayoutRefresh);
   if (document.fonts?.ready) {
     document.fonts.ready.then(scheduleProductLayoutRefresh).catch(() => {});
   }
-  window.setTimeout(restoreMobileHeroStartState, 250);
-  window.setTimeout(restoreMobileHeroStartState, 1000);
-  window.setTimeout(updateMobileHeroHandoffVisibility, 250);
-  window.setTimeout(updateMobileHeroHandoffVisibility, 1000);
+  gsap.set(".scrub-stage", { opacity: 0, visibility: "hidden" });
+  window.setTimeout(anchorHandoffToGlowOnce, 250);
+  window.setTimeout(anchorHandoffToGlowOnce, 1000);
+  window.setTimeout(updateProductHandoffVisibility, 250);
+  window.setTimeout(updateProductHandoffVisibility, 1000);
 
 } else {
   document.body.classList.add("no-scroll-smooth");

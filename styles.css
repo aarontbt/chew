@@ -412,7 +412,7 @@ p {
 .handoff-product {
   position: fixed;
   inset: 0;
-  z-index: 18;
+  z-index: 30;
   display: grid;
   place-items: center;
   pointer-events: none;
@@ -477,6 +477,7 @@ p {
   place-items: center;
   pointer-events: none;
   opacity: 0;
+  visibility: hidden;
 }
 
 .scrub-video {
@@ -1261,8 +1262,8 @@ blockquote {
   }
 
   .hero-video {
-    opacity: 1;
-    visibility: visible;
+    opacity: 0;
+    visibility: hidden;
   }
 
   .hero-actions {
@@ -1291,7 +1292,8 @@ blockquote {
   }
 
   .handoff-video {
-    max-height: 64svh;
+    width: min(100vw, 620px);
+    max-height: 70svh;
   }
 
   .scrub-video {
@@ -1536,6 +1538,11 @@ blockquote {
   .inside-intro {
     position: relative;
     top: auto;
+  }
+
+  .inside-intro {
+    opacity: 1;
+    visibility: visible;
   }
 
   .inside-sticky {

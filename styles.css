@@ -116,6 +116,7 @@ button:focus-visible {
 }
 
 .site-loader span {
+  margin-top: 8px;
   font-family: var(--heading);
   font-size: 0.82rem;
   font-weight: 900;

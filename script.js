@@ -13,6 +13,7 @@ const handoffVideo = document.querySelector(".handoff-video");
 const scrubVideo = document.querySelector(".scrub-video");
 const insideSection = document.querySelector(".inside-section");
 const heroSection = document.querySelector(".hero");
+const heroGlow = document.querySelector(".hero-glow");
 const siteLoader = document.querySelector(".site-loader");
 const chapterCards = Array.from(document.querySelectorAll("[data-chapter]"));
 const proofNumbers = Array.from(document.querySelectorAll("[data-count]"));
@@ -43,6 +44,13 @@ const isAppleTouchBrowser = () =>
   /iP(ad|hone|od)/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const getProductY = () => (isNarrowViewport() ? CONFIG.mobileProductY : CONFIG.productY);
+const getHeroProductY = () => {
+  if (!isNarrowViewport() || !heroGlow) return "7vh";
+  const rect = heroGlow.getBoundingClientRect();
+  const glowCenter = rect.top + rect.height / 2;
+  const viewportCenter = window.innerHeight / 2;
+  return `${Math.round(glowCenter - viewportCenter)}px`;
+};
 const getInsideProgressScale = (progress) => {
   if (!isNarrowViewport()) return CONFIG.productScale;
   const scaleProgress = Math.min(1, Math.max(0, progress / 0.16));
@@ -321,7 +329,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
       ".handoff-video",
       {
         x: () => (isNarrowViewport() ? "0vw" : "22vw"),
-        y: () => (isNarrowViewport() ? "18vh" : "7vh"),
+        y: getHeroProductY,
         scale: CONFIG.productScale,
         filter: "drop-shadow(0 26px 42px rgba(43, 30, 22, 0.18))",
       },

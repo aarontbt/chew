@@ -21,9 +21,24 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <noscript>
+      <style>
+        body.is-loading {
+          overflow: auto;
+        }
+
+        .site-loader {
+          display: none;
+        }
+      </style>
+    </noscript>
   </head>
-  <body>
+  <body class="is-loading">
     <a class="skip-link" href="#main">Skip to content</a>
+    <div class="site-loader" role="status" aria-live="polite" aria-label="Loading Chew">
+      <img src="assets/badge.png" alt="" aria-hidden="true" />
+      <span>Loading</span>
+    </div>
     <div class="paper-grain" aria-hidden="true"></div>
 
     <header class="site-header" aria-label="Site header">
@@ -65,8 +80,8 @@
           <div class="hero-glow"></div>
           <video
             class="product-video hero-video"
-            data-src="assets/chew-2-500-alpha.webm"
-            data-ios-src="assets/chew-2-500-alpha.mov"
+            data-src="assets/chew-500-alpha.webm"
+            data-ios-src="assets/chew-500-alpha.mov"
             muted
             playsinline
             preload="metadata"
@@ -82,8 +97,8 @@
       <div class="handoff-product" aria-hidden="true">
         <video
           class="product-video handoff-video"
-          data-src="assets/chew-2-500-alpha.webm"
-          data-ios-src="assets/chew-2-500-alpha.mov"
+          data-src="assets/chew-500-alpha.webm"
+          data-ios-src="assets/chew-500-alpha.mov"
           muted
           playsinline
           preload="auto"
@@ -100,8 +115,8 @@
           <div class="scrub-stage" aria-hidden="true">
             <video
               class="product-video scrub-video"
-              data-src="assets/chew-2-500-alpha.webm"
-              data-ios-src="assets/chew-2-500-alpha.mov"
+              data-src="assets/chew-500-alpha.webm"
+              data-ios-src="assets/chew-500-alpha.mov"
               muted
               playsinline
               preload="auto"
@@ -155,7 +170,7 @@
             <span>doughs tested</span>
           </div>
           <div class="proof-item">
-            <strong data-count="4">0</strong>
+            <strong data-count="7">0</strong>
             <span>years of choux</span>
           </div>
           <div class="proof-item">

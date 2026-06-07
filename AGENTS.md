@@ -20,9 +20,20 @@ External libraries loaded via CDN (no npm, no bundler):
 - **GSAP 3.12.5** + **ScrollTrigger** — all animations and scroll-driven effects
 - **Lenis 1.1.20** — smooth scroll (`lerp: 0.12`), feeds into `ScrollTrigger.update`
 
+### Initial preload overlay
+
+The page starts with `body.is-loading` and a `.site-loader` overlay in `index.html`. It shows the centered `assets/badge.png` mark with a pulse and Loading text while the heavy product video initializes.
+
+`setupSiteLoader()` in `script.js` hides the overlay after all of these are true:
+- the page `load` event has fired
+- `.handoff-video` has reached `loadeddata` or `canplay`
+- the loader has been visible for at least 850ms
+
+A 5.2s maximum timeout prevents the loader from trapping users on slow or failed video loads. `prefers-reduced-motion` disables the badge pulse, and the inline `<noscript>` style hides the loader when JavaScript is unavailable.
+
 ### Scroll-scrubbed video system
 
-The core interaction is a transparent alpha product video scrubbed by scroll progress. The default source is `assets/chew-2-500-alpha.webm` for browsers that support VP9 alpha. Apple touch browsers (iPhone/iPad and touch iPadOS desktop mode) use `assets/chew-2-500-alpha.mov`, an Apple-native HEVC with Alpha fallback. Video tags intentionally use `data-src` and `data-ios-src`, not eager `src`, so iOS does not start loading the WebM before `script.js` chooses the correct source.
+The core interaction is a transparent alpha product video scrubbed by scroll progress. The default source is `assets/chew-500-alpha.webm` for browsers that support VP9 alpha. Apple touch browsers (iPhone/iPad and touch iPadOS desktop mode) use `assets/chew-500-alpha.mov`, an Apple-native HEVC with Alpha fallback. Video tags intentionally use `data-src` and `data-ios-src`, not eager `src`, so iOS does not start loading the WebM before `script.js` chooses the correct source.
 
 Three video instances exist at different layout layers:
 
@@ -37,15 +48,15 @@ Do not replace the handoff video with a blob URL on Apple touch browsers. The bl
 **Video time constants** in `script.js`:
 - `IDLE_PREVIEW_END = 0.9` — end of idle float loop at page load
 - `SPIN_END = 4` — end of hero scroll phase (video rotates)
-- `BREAK_END = 9.35` — end of inside section scrub phase
+- `BREAK_END = 8` — end of inside section scrub phase
 
 **`syncVideoToProgress(video, progress, startTime, endTime, options)`** — the central function. It writes a target frame into `bufferedVideoTargets` (a `Map`). A `gsap.ticker` loop reads that map each frame and drives `video.currentTime` smoothly via playback rate control rather than direct seeks. Higher `priority` values win over lower ones when multiple triggers write to the same video.
 
 ### Scroll trigger phases
 
-1. **Hero phase** — `ScrollTrigger` on `.hero` (top→bottom), scrub `1.1`. Animates `.handoff-video` from offset position to centre while hero copy fades out. Video scrubs `0 → SPIN_END`.
-2. **Inside section enter** — `ScrollTrigger` on `.inside-section`. On enter, jumps video to `SPIN_END` and begins playing forward toward `BREAK_END`.
-3. **Inside section progress** — second `ScrollTrigger` on `.inside-section` drives `SPIN_END → BREAK_END` and calls `updateChapterCards(progress)`.
+1. **Hero phase** — `ScrollTrigger` on `.hero` (top→bottom), scrub `1.1`. Animates `.handoff-video` from offset position to centre while hero copy fades out. Video scrubs `0 → SPIN_END` for the first 4s spin.
+2. **Inside section enter** — `ScrollTrigger` on `.inside-section`. On enter, jumps video to `SPIN_END`.
+3. **Inside section progress** — second `ScrollTrigger` on `.inside-section` scrubs `SPIN_END → BREAK_END` for the final 4s break-apart phase and calls `updateChapterCards(progress)`. Do not enable `autoplayForward` or positive `lead` for this phase; the break-apart motion must stay tied to scroll progress.
 4. **Chapter cards** — `updateChapterCards()` calculates which of the four `[data-chapter]` cards is active based on scroll progress and fades it in/out via `gsap.set`.
 
 ### Fallback (`no-scroll-smooth` class)
@@ -54,15 +65,15 @@ When GSAP/ScrollTrigger are unavailable or `prefers-reduced-motion` is active, t
 
 ### Product video encoding
 
-The source master is `assets/chew-2.webm` (1080x1080 VP9 with alpha). The deployed scrub assets should be 500x500 and all-keyframe (`-g 1`) so scroll scrubbing can seek cleanly.
+The source master is `assets/chew-full.webm` (1080x1440 VP9 with alpha, 3:4). The deployed scrub assets are `chew-500-alpha.*`: 498x664, 3:4, silent, and all-keyframe (`-g 1`) so scroll scrubbing can seek cleanly.
 
 Create the desktop/non-iOS VP9 alpha WebM:
 
 ```bash
 ffmpeg -y \
-  -c:v libvpx-vp9 -i assets/chew-2.webm \
+  -c:v libvpx-vp9 -i assets/chew-full.webm \
   -an \
-  -vf "scale=500:500:flags=lanczos" \
+  -vf "scale=498:664:flags=lanczos" \
   -c:v libvpx-vp9 \
   -pix_fmt yuva420p \
   -b:v 0 \
@@ -70,34 +81,34 @@ ffmpeg -y \
   -g 1 \
   -row-mt 1 \
   -auto-alt-ref 0 \
-  assets/chew-2-500-alpha.webm
+  assets/chew-500-alpha.webm
 ```
 
 For iOS, do not rely on FFmpeg `hevc_videotoolbox` alone. It may accept `-alpha_quality` but still output plain HEVC, which renders black backgrounds on iOS Chrome/Safari. Use Apple `avconvert` with `PresetHEVCHighestQualityWithAlpha` from a ProRes 4444 alpha intermediate:
 
 ```bash
-find /tmp -maxdepth 1 -name 'chew-frames-500-*.png' -delete
+find /tmp -maxdepth 1 -name 'chew-frames-3x4-*.png' -delete
 
 ffmpeg -y \
-  -c:v libvpx-vp9 -i assets/chew-2.webm \
+  -c:v libvpx-vp9 -i assets/chew-full.webm \
   -an \
-  -vf "scale=500:500:flags=lanczos" \
-  -frames:v 240 \
-  /tmp/chew-frames-500-%04d.png
+  -vf "scale=498:664:flags=lanczos" \
+  -frames:v 192 \
+  /tmp/chew-frames-3x4-%04d.png
 
 ffmpeg -y \
   -framerate 24 \
-  -i /tmp/chew-frames-500-%04d.png \
+  -i /tmp/chew-frames-3x4-%04d.png \
   -c:v prores_ks \
   -profile:v 4444 \
   -pix_fmt yuva444p10le \
   -vendor apl0 \
-  /tmp/chew-2-500-prores4444.mov
+  /tmp/chew-500-3x4-prores4444.mov
 
 avconvert \
-  --source /tmp/chew-2-500-prores4444.mov \
+  --source /tmp/chew-500-3x4-prores4444.mov \
   --preset PresetHEVCHighestQualityWithAlpha \
-  --output assets/chew-2-500-alpha.mov \
+  --output assets/chew-500-alpha.mov \
   --replace \
   --progress
 ```
@@ -105,7 +116,7 @@ avconvert \
 Verify the iOS fallback with macOS metadata. It must say `HEVC with Alpha`:
 
 ```bash
-mdls -name kMDItemCodecs -name kMDItemPixelWidth -name kMDItemPixelHeight assets/chew-2-500-alpha.mov
+mdls -name kMDItemCodecs -name kMDItemPixelWidth -name kMDItemPixelHeight assets/chew-500-alpha.mov
 ```
 
 Expected:
@@ -114,6 +125,8 @@ Expected:
 kMDItemCodecs = (
     "HEVC with Alpha"
 )
+kMDItemPixelHeight = 664
+kMDItemPixelWidth  = 498
 ```
 
 ## Brand tokens

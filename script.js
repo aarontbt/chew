@@ -13,18 +13,19 @@ const handoffVideo = document.querySelector(".handoff-video");
 const scrubVideo = document.querySelector(".scrub-video");
 const insideSection = document.querySelector(".inside-section");
 const heroSection = document.querySelector(".hero");
+const siteLoader = document.querySelector(".site-loader");
 const chapterCards = Array.from(document.querySelectorAll("[data-chapter]"));
 const proofNumbers = Array.from(document.querySelectorAll("[data-count]"));
 
 const CONFIG = {
   // Video phase timestamps (seconds) — adjust when video asset changes
   spinEnd: 4,
-  breakEnd: 9.35,
+  breakEnd: 8,
   idlePreviewEnd: 0.9,
 
   // Product size & position (used in every gsap.set on .handoff-video)
-  productScale: 0.8,
-  mobileProductScale: 0.8,
+  productScale: 1.0,
+  mobileProductScale: 1.0,
   productY: "9vh",
   mobileProductY: "-2vh",
   lenisSmoothLerp: 0.12,
@@ -62,6 +63,41 @@ function showFirstFrame(video) {
   if (!video) return;
   video.pause();
   video.currentTime = 0.01;
+}
+
+function waitForWindowLoad() {
+  if (document.readyState === "complete") return Promise.resolve();
+  return new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
+}
+
+function waitForVideoData(video) {
+  if (!video || video.readyState >= 2) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => {
+      video.removeEventListener("loadeddata", done);
+      video.removeEventListener("canplay", done);
+      resolve();
+    };
+    video.addEventListener("loadeddata", done, { once: true });
+    video.addEventListener("canplay", done, { once: true });
+  });
+}
+
+function hideSiteLoader() {
+  document.body.classList.remove("is-loading");
+  document.body.classList.add("is-loaded");
+  if (siteLoader) {
+    siteLoader.setAttribute("aria-hidden", "true");
+  }
+}
+
+function setupSiteLoader() {
+  if (!siteLoader) return;
+  const minimumDisplay = new Promise((resolve) => setTimeout(resolve, 850));
+  const maximumDisplay = new Promise((resolve) => setTimeout(resolve, 5200));
+  const ready = Promise.all([minimumDisplay, waitForWindowLoad(), waitForVideoData(handoffVideo)]);
+
+  Promise.race([ready, maximumDisplay]).then(hideSiteLoader);
 }
 
 function fadeIn(target, opts = {}) {
@@ -160,6 +196,7 @@ function updateChapterCards(progress) {
 setupVideo(heroVideo);
 setupVideo(handoffVideo);
 setupVideo(scrubVideo);
+setupSiteLoader();
 
 if (!prefersReducedMotion && gsap && ScrollTrigger) {
   gsap.ticker.add(() => {
@@ -339,10 +376,10 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
       const isBackward = self.direction === -1;
       syncVideoToProgress(handoffVideo, progress, CONFIG.spinEnd, CONFIG.breakEnd, {
         correction: isBackward ? 0.55 : 0.32,
-        lead: isBackward ? 0 : 0.85,
+        lead: 0,
         minRate: 0.95,
         maxRate: 1.55,
-        autoplayForward: !isBackward,
+        autoplayForward: false,
         priority: 2,
         directionOverride: self.direction,
       });

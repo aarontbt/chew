@@ -45,14 +45,20 @@ site/
 
 ---
 
+## Initial preload overlay
+
+The page shows a centered `assets/badge.png` loader while the first product video data loads. `script.js` hides it after the page load event, `.handoff-video` reaches `loadeddata` or `canplay`, and a short minimum display time has passed. A 5.2s timeout prevents a stuck loading state.
+
+---
+
 ## Scroll-scrubbed video
 
 The core interaction is a transparent alpha product video scrubbed by scroll progress. The site uses:
 
 | Browser path | Asset |
 |---|---|
-| Desktop/non-iOS | `assets/chew-2-500-alpha.webm` |
-| iPhone/iPad/WebKit touch browsers | `assets/chew-2-500-alpha.mov` |
+| Desktop/non-iOS | `assets/chew-500-alpha.webm` |
+| iPhone/iPad/WebKit touch browsers | `assets/chew-500-alpha.mov` |
 
 Video tags use `data-src` and `data-ios-src`; `script.js` chooses the correct source before loading so mobile Safari/Chrome does not accidentally fetch the WebM alpha file.
 
@@ -62,19 +68,19 @@ Key constants in `script.js`:
 |---|---|---|
 | `IDLE_PREVIEW_END` | `0.9s` | End of idle float loop at load |
 | `SPIN_END` | `4s` | End of hero scroll phase |
-| `BREAK_END` | `9.35s` | End of inside section scrub |
+| `BREAK_END` | `8s` | End of inside section scrub |
 
 ---
 
 ## Product video encoding
 
-The source master is `assets/chew-2.webm` (1080x1080 VP9 with alpha). Rebuild the 500x500 all-keyframe WebM with:
+The source master is `assets/chew-full.webm` (1080x1440 VP9 with alpha, 3:4). The optimized scrub files are `chew-500-alpha.*`: 498x664, 3:4, silent, and all-keyframe.
 
 ```bash
 ffmpeg -y \
-  -c:v libvpx-vp9 -i assets/chew-2.webm \
+  -c:v libvpx-vp9 -i assets/chew-full.webm \
   -an \
-  -vf "scale=500:500:flags=lanczos" \
+  -vf "scale=498:664:flags=lanczos" \
   -c:v libvpx-vp9 \
   -pix_fmt yuva420p \
   -b:v 0 \
@@ -82,34 +88,34 @@ ffmpeg -y \
   -g 1 \
   -row-mt 1 \
   -auto-alt-ref 0 \
-  assets/chew-2-500-alpha.webm
+  assets/chew-500-alpha.webm
 ```
 
 For iOS, use Apple `avconvert` from a ProRes 4444 alpha intermediate. FFmpeg `hevc_videotoolbox` may output plain HEVC even when alpha flags are accepted.
 
 ```bash
-find /tmp -maxdepth 1 -name 'chew-frames-500-*.png' -delete
+find /tmp -maxdepth 1 -name 'chew-frames-3x4-*.png' -delete
 
 ffmpeg -y \
-  -c:v libvpx-vp9 -i assets/chew-2.webm \
+  -c:v libvpx-vp9 -i assets/chew-full.webm \
   -an \
-  -vf "scale=500:500:flags=lanczos" \
-  -frames:v 240 \
-  /tmp/chew-frames-500-%04d.png
+  -vf "scale=498:664:flags=lanczos" \
+  -frames:v 192 \
+  /tmp/chew-frames-3x4-%04d.png
 
 ffmpeg -y \
   -framerate 24 \
-  -i /tmp/chew-frames-500-%04d.png \
+  -i /tmp/chew-frames-3x4-%04d.png \
   -c:v prores_ks \
   -profile:v 4444 \
   -pix_fmt yuva444p10le \
   -vendor apl0 \
-  /tmp/chew-2-500-prores4444.mov
+  /tmp/chew-500-3x4-prores4444.mov
 
 avconvert \
-  --source /tmp/chew-2-500-prores4444.mov \
+  --source /tmp/chew-500-3x4-prores4444.mov \
   --preset PresetHEVCHighestQualityWithAlpha \
-  --output assets/chew-2-500-alpha.mov \
+  --output assets/chew-500-alpha.mov \
   --replace \
   --progress
 ```
@@ -117,7 +123,7 @@ avconvert \
 Verify the iOS file reports `HEVC with Alpha`:
 
 ```bash
-mdls -name kMDItemCodecs -name kMDItemPixelWidth -name kMDItemPixelHeight assets/chew-2-500-alpha.mov
+mdls -name kMDItemCodecs -name kMDItemPixelWidth -name kMDItemPixelHeight assets/chew-500-alpha.mov
 ```
 
 ---
@@ -128,7 +134,7 @@ mdls -name kMDItemCodecs -name kMDItemPixelWidth -name kMDItemPixelHeight assets
 |---|---|---|
 | 01 | Hero | Introduce Chew as a new pastry category |
 | 02 | What's Inside | Scroll-scrubbed product reveal with four chapters |
-| 03 | Obsession Proof | Craft credibility — 200 doughs, 4 years, one shell |
+| 03 | Obsession Proof | Craft credibility — 200 doughs, 7 years, one shell |
 | 04 | Meet Jessie | Founder story — Jessie Chong, Kuala Lumpur |
 | 05 | Product Ritual | How a Chouxkie is made, four-step process |
 | 06 | First Bite Club | Main conversion — WhatsApp signup, capped at 100 |

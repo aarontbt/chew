@@ -33,6 +33,15 @@ body {
   background: var(--cream);
 }
 
+body.is-loading {
+  overflow: hidden;
+}
+
+body.is-loaded .site-loader {
+  opacity: 0;
+  visibility: hidden;
+}
+
 body.no-scroll-smooth {
   scroll-behavior: smooth;
 }
@@ -78,6 +87,58 @@ button:focus-visible {
 
 .skip-link:focus {
   transform: translateY(0);
+}
+
+.site-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  gap: 18px;
+  align-content: center;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 193, 214, 0.38), transparent 36%),
+    var(--cream);
+  color: var(--espresso);
+  transition:
+    opacity 0.45s ease,
+    visibility 0s linear 0.45s;
+}
+
+.site-loader img {
+  width: clamp(116px, 18vw, 176px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 32px rgba(43, 30, 22, 0.14));
+  animation: badgePulse 1.35s ease-in-out infinite;
+}
+
+.site-loader span {
+  font-family: var(--heading);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@keyframes badgePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.07);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-loader img {
+    animation: none;
+  }
 }
 
 .paper-grain {
@@ -356,7 +417,7 @@ p {
 
 .handoff-video {
   width: clamp(320px, 66vmin, 780px);
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4;
   max-width: 86vw;
   max-height: 86svh;
   object-fit: contain;
@@ -415,7 +476,7 @@ p {
 
 .scrub-video {
   width: clamp(320px, 66vmin, 780px);
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4;
   max-width: 86vw;
   max-height: 86svh;
   object-fit: contain;

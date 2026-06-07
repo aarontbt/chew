@@ -46,12 +46,17 @@ const isAppleTouchBrowser = () =>
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const getProductY = () => (isNarrowViewport() ? CONFIG.mobileProductY : CONFIG.productY);
 const getProductScale = () => (isNarrowViewport() ? CONFIG.mobileProductScale : CONFIG.productScale);
-const getHeroProductY = () => {
-  if (!isNarrowViewport() || !heroGlow) return "7vh";
+const getHeroProductAxisOffset = (axis, fallback) => {
+  if (!heroGlow) return fallback;
   const rect = heroGlow.getBoundingClientRect();
-  const glowCenter = rect.top + rect.height / 2;
-  const viewportCenter = window.innerHeight / 2;
-  return `${Math.round(glowCenter - viewportCenter)}px`;
+  if (!rect.width || !rect.height) return fallback;
+  const center = axis === "x" ? rect.left + rect.width / 2 : rect.top + rect.height / 2;
+  const viewportCenter = axis === "x" ? window.innerWidth / 2 : window.innerHeight / 2;
+  return `${Math.round(center - viewportCenter)}px`;
+};
+const getHeroProductX = () => getHeroProductAxisOffset("x", isNarrowViewport() ? "0vw" : "22vw");
+const getHeroProductY = () => {
+  return getHeroProductAxisOffset("y", isNarrowViewport() ? CONFIG.mobileProductY : "7vh");
 };
 
 function once(el, event, fn, opts) {
@@ -360,7 +365,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     .fromTo(
       ".handoff-video",
       {
-        x: () => (isNarrowViewport() ? "0vw" : "22vw"),
+        x: getHeroProductX,
         y: getHeroProductY,
         scale: getProductScale,
         filter: "drop-shadow(0 26px 42px rgba(43, 30, 22, 0.18))",
@@ -513,7 +518,15 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     }
 
     const heroProgress = heroHandoffTimeline.scrollTrigger?.progress ?? 0;
+    heroHandoffTimeline.invalidate();
     heroHandoffTimeline.progress(heroProgress);
+    if (heroProgress <= 0.001) {
+      gsap.set(".handoff-video", {
+        x: getHeroProductX(),
+        scale: getProductScale(),
+        y: getHeroProductY(),
+      });
+    }
   }
 
   function scheduleProductLayoutRefresh() {
@@ -524,6 +537,9 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
   window.addEventListener("resize", scheduleProductLayoutRefresh, { passive: true });
   window.addEventListener("orientationchange", scheduleProductLayoutRefresh, { passive: true });
   window.matchMedia("(max-width: 900px)").addEventListener("change", scheduleProductLayoutRefresh);
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(scheduleProductLayoutRefresh).catch(() => {});
+  }
 
 } else {
   document.body.classList.add("no-scroll-smooth");

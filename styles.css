@@ -865,7 +865,7 @@ blockquote {
   position: absolute;
   left: 5%;
   right: 5%;
-  top: 41px;
+  top: calc(((100% - 54px) / 4) * 9 / 16 + 35px);
   height: 3px;
   background: var(--chew-pink);
 }
@@ -878,6 +878,22 @@ blockquote {
   border-radius: var(--soft-radius);
   background: var(--cream);
   box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.ritual-media {
+  margin: -24px -24px 18px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: 0;
+  background: rgba(255, 193, 214, 0.28);
+}
+
+.ritual-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .visually-hidden {
@@ -1419,8 +1435,12 @@ blockquote {
   }
 
   h1 {
-    font-size: clamp(48px, 14vw, 58px);
+    font-size: clamp(36px, 10.5vw, 58px);
     line-height: 0.93;
+  }
+
+  .hero h1 em {
+    display: block;
   }
 
   .tagline,

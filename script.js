@@ -17,6 +17,7 @@ const heroGlow = document.querySelector(".hero-glow");
 const siteLoader = document.querySelector(".site-loader");
 const chapterCards = Array.from(document.querySelectorAll("[data-chapter]"));
 const proofNumbers = Array.from(document.querySelectorAll("[data-count]"));
+const ritualVideos = Array.from(document.querySelectorAll(".ritual-video"));
 
 const CONFIG = {
   // Video phase timestamps (seconds) — adjust when video asset changes
@@ -86,6 +87,11 @@ function waitForVideoData(video) {
   });
 }
 
+function waitForInitialVideos() {
+  const videos = [handoffVideo, ...ritualVideos].filter(Boolean);
+  return Promise.all(videos.map(waitForVideoData));
+}
+
 function hideSiteLoader() {
   document.body.classList.remove("is-loading");
   document.body.classList.add("is-loaded");
@@ -98,7 +104,7 @@ function setupSiteLoader() {
   if (!siteLoader) return;
   const minimumDisplay = new Promise((resolve) => setTimeout(resolve, 850));
   const maximumDisplay = new Promise((resolve) => setTimeout(resolve, 5200));
-  const ready = Promise.all([minimumDisplay, waitForWindowLoad(), waitForVideoData(handoffVideo)]);
+  const ready = Promise.all([minimumDisplay, waitForWindowLoad(), waitForInitialVideos()]);
 
   Promise.race([ready, maximumDisplay]).then(hideSiteLoader);
 }
@@ -196,10 +202,37 @@ function updateChapterCards(progress) {
   });
 }
 
+function setupRitualVideos() {
+  if (!ritualVideos.length || prefersReducedMotion) return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const video = entry.target;
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
+          const playPromise = video.play();
+          if (playPromise && typeof playPromise.catch === "function") {
+            playPromise.catch(() => {});
+          }
+        } else {
+          video.pause();
+        }
+      });
+    },
+    { threshold: [0, 0.35, 0.6] }
+  );
+
+  ritualVideos.forEach((video) => {
+    video.muted = true;
+    observer.observe(video);
+  });
+}
+
 setupVideo(heroVideo);
 setupVideo(handoffVideo);
 setupVideo(scrubVideo);
 setupSiteLoader();
+setupRitualVideos();
 
 if (!prefersReducedMotion && gsap && ScrollTrigger) {
   gsap.ticker.add(() => {
@@ -251,8 +284,12 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     );
   });
 
+  let lenis = null;
+  let insideScrollTrigger = null;
+  let resizeRefreshTimer = 0;
+
   if (LenisCtor) {
-    const lenis = new LenisCtor({
+    lenis = new LenisCtor({
       lerp: CONFIG.lenisSmoothLerp,
       smoothWheel: true,
     });
@@ -345,7 +382,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
   // refresh cycle (GSAP 3.12.x). onUpdate's syncVideoToProgress therefore
   // overwrites onEnter's call when both fire on the same tick, which matches
   // the original two-instance behaviour.
-  ScrollTrigger.create({
+  insideScrollTrigger = ScrollTrigger.create({
     trigger: insideSection,
     start: "top top",
     end: "bottom bottom",
@@ -460,6 +497,33 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     stagger: 0.08,
     scrollTrigger: { trigger: ".benefits", start: CONFIG.groupStart },
   });
+
+  function refreshProductLayout() {
+    if (lenis && typeof lenis.resize === "function") lenis.resize();
+    ScrollTrigger.refresh(true);
+
+    if (insideScrollTrigger?.isActive) {
+      gsap.set(".handoff-video", {
+        x: 0,
+        scale: getProductScale(),
+        y: getProductY(),
+      });
+      updateChapterCards(insideScrollTrigger.progress);
+      return;
+    }
+
+    const heroProgress = heroHandoffTimeline.scrollTrigger?.progress ?? 0;
+    heroHandoffTimeline.progress(heroProgress);
+  }
+
+  function scheduleProductLayoutRefresh() {
+    window.clearTimeout(resizeRefreshTimer);
+    resizeRefreshTimer = window.setTimeout(refreshProductLayout, 160);
+  }
+
+  window.addEventListener("resize", scheduleProductLayoutRefresh, { passive: true });
+  window.addEventListener("orientationchange", scheduleProductLayoutRefresh, { passive: true });
+  window.matchMedia("(max-width: 900px)").addEventListener("change", scheduleProductLayoutRefresh);
 
 } else {
   document.body.classList.add("no-scroll-smooth");

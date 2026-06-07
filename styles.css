@@ -108,8 +108,10 @@ button:focus-visible {
 
 .site-loader img {
   width: clamp(116px, 18vw, 176px);
+  height: clamp(116px, 18vw, 176px);
   aspect-ratio: 1;
   border-radius: 50%;
+  clip-path: circle(50%);
   object-fit: contain;
   filter: drop-shadow(0 18px 32px rgba(43, 30, 22, 0.14));
   animation: badgePulse 1.35s ease-in-out infinite;
@@ -197,9 +199,10 @@ button:focus-visible {
 
 .origin-stamp {
   width: 116px;
+  height: 116px;
   aspect-ratio: 1;
   transform: rotate(8deg);
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 50%;
 }
 
@@ -689,6 +692,7 @@ p {
 .maker-photo {
   position: relative;
   margin: 0;
+  aspect-ratio: 1;
   border-radius: var(--soft-radius);
   overflow: hidden;
   background: var(--marshmallow);
@@ -706,8 +710,9 @@ p {
 
 .maker-photo img {
   width: 100%;
-  aspect-ratio: 0.9;
+  height: 100%;
   object-fit: cover;
+  object-position: center;
 }
 
 .maker-copy > p:not(.section-kicker):not(.question) {

@@ -7,12 +7,26 @@
       name="description"
       content="Chew is the Malaysian-born chouxkie: a choux puff and cookie hybrid. Warm cookies. Happy people. Made with obsession."
     />
+    <link rel="canonical" href="https://chouxkie.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://chouxkie.com/" />
+    <meta property="og:locale" content="en_MY" />
+    <meta property="og:site_name" content="Chew" />
     <meta property="og:title" content="Chew | The World's First Chouxkie" />
     <meta
       property="og:description"
       content="A cookie with a secret. Choux puff + cookie. Made in Malaysia. Made with obsession."
     />
-    <meta property="og:image" content="assets/product-pull-3.jpeg" />
+    <meta property="og:image" content="https://chouxkie.com/assets/og-chouxkie.webp" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Chew | The World's First Chouxkie" />
+    <meta
+      name="twitter:description"
+      content="A cookie with a secret. Choux puff + cookie. Made in Malaysia. Made with obsession."
+    />
+    <meta name="twitter:image" content="https://chouxkie.com/assets/og-chouxkie.webp" />
     <title>Chew | The World's First Chouxkie</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -20,7 +34,28 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,700&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@700;800;900&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=maker-photo-1" />
+    <link rel="icon" href="/assets/favicon.ico" sizes="any" />
+    <link rel="icon" href="/assets/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#ff689d" />
+
+    <!-- TODO: replace with the real verification string after registering https://chouxkie.com/ in Google Search Console -->
+    <meta name="google-site-verification" content="REPLACE_WITH_SEARCH_CONSOLE_VERIFICATION_CODE" />
+
+    <!-- TODO: get a GA4 Measurement ID, replace G-XXXXXXXXXX below, then uncomment this block
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-XXXXXXXXXX");
+    </script>
+    -->
+
     <noscript>
       <style>
         body.is-loading {
@@ -36,7 +71,7 @@
   <body class="is-loading">
     <a class="skip-link" href="#main">Skip to content</a>
     <div class="site-loader" role="status" aria-live="polite" aria-label="Warming up Chew">
-      <img src="assets/badge.png" alt="" aria-hidden="true" />
+      <img src="assets/badge.webp" width="1254" height="1254" alt="" aria-hidden="true" />
       <span>Warming up</span>
     </div>
     <div class="paper-grain" aria-hidden="true"></div>
@@ -53,7 +88,7 @@
       <button class="menu-toggle" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
-      <img class="origin-stamp" src="assets/badge.png" alt="Made in Malaysia. Made with obsession." />
+      <img class="origin-stamp" src="assets/badge.webp" width="1254" height="1254" alt="Made in Malaysia. Made with obsession." />
     </header>
 
     <div class="mobile-nav" aria-hidden="true">
@@ -155,7 +190,7 @@
           <em>craveable.</em>
         </p>
         <figure class="obsession-choux" aria-hidden="true">
-          <img src="assets/choux.png" alt="" />
+          <img src="assets/choux.webp" width="1448" height="1086" loading="lazy" alt="" aria-hidden="true" />
         </figure>
         <div class="obsession-copy">
           <p id="obsession-title">
@@ -183,7 +218,7 @@
 
       <section class="maker" id="maker" aria-labelledby="maker-title">
         <figure class="maker-photo">
-          <img src="assets/jessie-chef.png" alt="Jessie Chong in a chef outfit" />
+          <img src="assets/jessie-chef.webp" width="1254" height="1254" loading="lazy" alt="Jessie Chong in a chef outfit" />
         </figure>
         <div class="maker-copy">
           <h2 id="maker-title">
@@ -377,7 +412,7 @@
       </section>
 
       <section class="photo-strip" aria-label="Chouxkie product photo">
-        <img src="assets/footer-shop.png" alt="Chew shop" />
+        <img src="assets/footer-chew.webp" width="1280" height="720" loading="lazy" alt="Chew chouxkie" />
       </section>
     </main>
 
@@ -409,6 +444,48 @@
         <p>CHOUXKIE™ is a trademark of Chew Bakehouse.</p>
       </div>
     </footer>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://chouxkie.com/#organization",
+            "name": "Chew Bakehouse",
+            "url": "https://chouxkie.com/",
+            "logo": "https://chouxkie.com/assets/icon-512.png",
+            "sameAs": [
+              "https://www.instagram.com/mypopelini/",
+              "https://www.tiktok.com/@chew.bakehouse"
+            ]
+          },
+          {
+            "@type": "Bakery",
+            "@id": "https://chouxkie.com/#business",
+            "name": "Chew Bakehouse",
+            "url": "https://chouxkie.com/",
+            "image": "https://chouxkie.com/assets/og-chouxkie.webp",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Kuala Lumpur",
+              "addressCountry": "MY"
+            },
+            "founder": {
+              "@type": "Person",
+              "name": "Jessie Chong"
+            }
+          },
+          {
+            "@type": "Product",
+            "name": "Chouxkie",
+            "description": "Chew is the Malaysian-born chouxkie: a choux puff and cookie hybrid. Warm cookies. Happy people. Made with obsession.",
+            "image": "https://chouxkie.com/assets/og-chouxkie.webp",
+            "brand": { "@id": "https://chouxkie.com/#organization" }
+          }
+        ]
+      }
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>

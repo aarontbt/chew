@@ -18,6 +18,7 @@ const siteLoader = document.querySelector(".site-loader");
 const chapterCards = Array.from(document.querySelectorAll("[data-chapter]"));
 const proofNumbers = Array.from(document.querySelectorAll("[data-count]"));
 const ritualVideos = Array.from(document.querySelectorAll(".ritual-video"));
+const heroContentSelector = ".hero-copy, .hero-actions";
 
 const CONFIG = {
   // Video phase timestamps (seconds) — adjust when video asset changes
@@ -314,6 +315,20 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     priority: 0,
   });
 
+  function restoreMobileHeroStartState() {
+    if (!isNarrowViewport() || window.scrollY > 8) return;
+    if (heroHandoffTimeline.scrollTrigger?.progress <= 0.02) {
+      heroHandoffTimeline.invalidate();
+      heroHandoffTimeline.progress(0);
+    }
+    gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+    gsap.set(".handoff-video", {
+      x: getHeroProductX(),
+      y: getHeroProductY(),
+      scale: getProductScale(),
+    });
+  }
+
   once(document.documentElement, "touchstart", () => {
     [heroVideo, handoffVideo, scrubVideo].forEach((video) => {
       if (!video) return;
@@ -350,6 +365,12 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
         scrub: CONFIG.heroScrub,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
+          if (isNarrowViewport()) {
+            gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+            if (self.progress <= 0.02) {
+              restoreMobileHeroStartState();
+            }
+          }
           if (self.direction === -1) bufferedVideoTargets.delete(handoffVideo);
           syncVideoToProgress(handoffVideo, self.progress, 0.01, CONFIG.spinEnd, {
             correction: 0.18,
@@ -360,6 +381,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
             directionOverride: self.direction,
           });
         },
+        onScrubComplete: restoreMobileHeroStartState,
       },
     })
     .fromTo(
@@ -380,8 +402,11 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
       },
       0
     )
-    .to(".hero-glow", { autoAlpha: 0, duration: 0.22, ease: "none" }, 0.08)
-    .to(".hero-copy, .hero-actions", { autoAlpha: 0, y: -26, duration: 0.34, ease: "none" }, 0.34);
+    .to(".hero-glow", { autoAlpha: 0, duration: 0.22, ease: "none" }, 0.08);
+
+  if (!isNarrowViewport()) {
+    heroHandoffTimeline.to(heroContentSelector, { autoAlpha: 0, y: -26, duration: 0.34, ease: "none" }, 0.34);
+  }
 
   // NOTE: onEnter/onLeave callbacks fire before onUpdate within a single GSAP
   // refresh cycle (GSAP 3.12.x). onUpdate's syncVideoToProgress therefore
@@ -506,6 +531,9 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
   function refreshProductLayout() {
     if (lenis && typeof lenis.resize === "function") lenis.resize();
     ScrollTrigger.refresh(true);
+    if (isNarrowViewport()) {
+      gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+    }
 
     if (insideScrollTrigger?.isActive) {
       gsap.set(".handoff-video", {
@@ -536,10 +564,13 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
 
   window.addEventListener("resize", scheduleProductLayoutRefresh, { passive: true });
   window.addEventListener("orientationchange", scheduleProductLayoutRefresh, { passive: true });
+  window.addEventListener("scroll", restoreMobileHeroStartState, { passive: true });
   window.matchMedia("(max-width: 900px)").addEventListener("change", scheduleProductLayoutRefresh);
   if (document.fonts?.ready) {
     document.fonts.ready.then(scheduleProductLayoutRefresh).catch(() => {});
   }
+  window.setTimeout(restoreMobileHeroStartState, 250);
+  window.setTimeout(restoreMobileHeroStartState, 1000);
 
 } else {
   document.body.classList.add("no-scroll-smooth");

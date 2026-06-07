@@ -1260,6 +1260,11 @@ blockquote {
     min-height: 32svh;
   }
 
+  .hero-video {
+    opacity: 1;
+    visibility: visible;
+  }
+
   .hero-actions {
     order: 3;
     z-index: 22;

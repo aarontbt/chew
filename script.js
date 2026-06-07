@@ -47,6 +47,7 @@ const isAppleTouchBrowser = () =>
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const getProductY = () => (isNarrowViewport() ? CONFIG.mobileProductY : CONFIG.productY);
 const getProductScale = () => (isNarrowViewport() ? CONFIG.mobileProductScale : CONFIG.productScale);
+const getHeroScrub = () => (isNarrowViewport() ? true : CONFIG.heroScrub);
 const getHeroProductAxisOffset = (axis, fallback) => {
   if (!heroGlow) return fallback;
   const rect = heroGlow.getBoundingClientRect();
@@ -329,6 +330,21 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     });
   }
 
+  function updateMobileHeroHandoffVisibility() {
+    if (!handoffProduct || !heroSection) return;
+    if (!isNarrowViewport()) {
+      gsap.set(handoffProduct, { autoAlpha: 1, visibility: "visible" });
+      return;
+    }
+
+    const heroBottom = heroSection.offsetTop + heroSection.offsetHeight;
+    const isInsideHero = window.scrollY < heroBottom - 12;
+    gsap.set(handoffProduct, {
+      autoAlpha: isInsideHero ? 0 : 1,
+      visibility: isInsideHero ? "hidden" : "visible",
+    });
+  }
+
   once(document.documentElement, "touchstart", () => {
     [heroVideo, handoffVideo, scrubVideo].forEach((video) => {
       if (!video) return;
@@ -362,11 +378,12 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
         trigger: heroSection,
         start: "top top",
         end: "bottom top",
-        scrub: CONFIG.heroScrub,
+        scrub: getHeroScrub(),
         invalidateOnRefresh: true,
         onUpdate: (self) => {
           if (isNarrowViewport()) {
             gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+            updateMobileHeroHandoffVisibility();
             if (self.progress <= 0.02) {
               restoreMobileHeroStartState();
             }
@@ -533,6 +550,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     ScrollTrigger.refresh(true);
     if (isNarrowViewport()) {
       gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+      updateMobileHeroHandoffVisibility();
     }
 
     if (insideScrollTrigger?.isActive) {
@@ -565,12 +583,15 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
   window.addEventListener("resize", scheduleProductLayoutRefresh, { passive: true });
   window.addEventListener("orientationchange", scheduleProductLayoutRefresh, { passive: true });
   window.addEventListener("scroll", restoreMobileHeroStartState, { passive: true });
+  window.addEventListener("scroll", updateMobileHeroHandoffVisibility, { passive: true });
   window.matchMedia("(max-width: 900px)").addEventListener("change", scheduleProductLayoutRefresh);
   if (document.fonts?.ready) {
     document.fonts.ready.then(scheduleProductLayoutRefresh).catch(() => {});
   }
   window.setTimeout(restoreMobileHeroStartState, 250);
   window.setTimeout(restoreMobileHeroStartState, 1000);
+  window.setTimeout(updateMobileHeroHandoffVisibility, 250);
+  window.setTimeout(updateMobileHeroHandoffVisibility, 1000);
 
 } else {
   document.body.classList.add("no-scroll-smooth");

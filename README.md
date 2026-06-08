@@ -74,13 +74,13 @@ Key constants in `script.js`:
 
 ## Product video encoding
 
-The source master is `assets/chew-full.webm` (1080x1440 VP9 with alpha, 3:4). The optimized scrub files are `chew-500-alpha.*`: 498x664, 3:4, silent, and all-keyframe.
+The source master is `assets/chew-full.webm` (1080x1440 VP9 with alpha, 3:4). The optimized scrub files are `chew-500-alpha.*`: 750x1000, 3:4, silent, and all-keyframe.
 
 ```bash
 ffmpeg -y \
   -c:v libvpx-vp9 -i assets/chew-full.webm \
   -an \
-  -vf "scale=498:664:flags=lanczos" \
+  -vf "scale=750:1000:flags=lanczos" \
   -c:v libvpx-vp9 \
   -pix_fmt yuva420p \
   -b:v 0 \
@@ -99,7 +99,7 @@ find /tmp -maxdepth 1 -name 'chew-frames-3x4-*.png' -delete
 ffmpeg -y \
   -c:v libvpx-vp9 -i assets/chew-full.webm \
   -an \
-  -vf "scale=498:664:flags=lanczos" \
+  -vf "scale=750:1000:flags=lanczos" \
   -frames:v 192 \
   /tmp/chew-frames-3x4-%04d.png
 

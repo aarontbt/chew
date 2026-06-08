@@ -65,7 +65,7 @@ When GSAP/ScrollTrigger are unavailable or `prefers-reduced-motion` is active, t
 
 ### Product video encoding
 
-The source master is `assets/chew-full.webm` (1080x1440 VP9 with alpha, 3:4). The deployed scrub assets are `chew-500-alpha.*`: 498x664, 3:4, silent, and all-keyframe (`-g 1`) so scroll scrubbing can seek cleanly.
+The source master is `assets/chew-full.webm` (1080x1440 VP9 with alpha, 3:4). The deployed scrub assets are `chew-500-alpha.*`: 750x1000, 3:4, silent, and all-keyframe (`-g 1`) so scroll scrubbing can seek cleanly.
 
 Create the desktop/non-iOS VP9 alpha WebM:
 
@@ -73,7 +73,7 @@ Create the desktop/non-iOS VP9 alpha WebM:
 ffmpeg -y \
   -c:v libvpx-vp9 -i assets/chew-full.webm \
   -an \
-  -vf "scale=498:664:flags=lanczos" \
+  -vf "scale=750:1000:flags=lanczos" \
   -c:v libvpx-vp9 \
   -pix_fmt yuva420p \
   -b:v 0 \
@@ -92,7 +92,7 @@ find /tmp -maxdepth 1 -name 'chew-frames-3x4-*.png' -delete
 ffmpeg -y \
   -c:v libvpx-vp9 -i assets/chew-full.webm \
   -an \
-  -vf "scale=498:664:flags=lanczos" \
+  -vf "scale=750:1000:flags=lanczos" \
   -frames:v 192 \
   /tmp/chew-frames-3x4-%04d.png
 
@@ -125,8 +125,8 @@ Expected:
 kMDItemCodecs = (
     "HEVC with Alpha"
 )
-kMDItemPixelHeight = 664
-kMDItemPixelWidth  = 498
+kMDItemPixelHeight = 1000
+kMDItemPixelWidth  = 750
 ```
 
 ## Brand tokens

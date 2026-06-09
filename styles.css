@@ -473,6 +473,7 @@ p {
 .scrub-stage {
   position: absolute;
   inset: 0;
+  z-index: 1;
   display: grid;
   place-items: center;
   pointer-events: none;
@@ -501,7 +502,7 @@ p {
 
 .chapter-stack {
   position: relative;
-  z-index: 3;
+  z-index: 60;
   width: min(var(--max-w), calc(100% - 28px));
   min-height: 62svh;
   pointer-events: none;
@@ -509,6 +510,7 @@ p {
 
 .chapter-card {
   position: absolute;
+  z-index: 1;
   left: auto;
   right: 0;
   top: 50%;
@@ -1288,6 +1290,7 @@ blockquote {
   }
 
   .inside-sticky {
+    z-index: 36;
     padding-top: 128px;
   }
 
@@ -1312,6 +1315,7 @@ blockquote {
     bottom: auto;
     width: min(360px, calc(100vw - 44px));
     margin: 0 auto;
+    background: rgba(255, 241, 230, 0.94);
     translate: 0 -50%;
     transform: translateY(30px);
   }
@@ -1430,6 +1434,17 @@ blockquote {
   .photo-strip img {
     height: 86vw;
     max-height: none;
+  }
+
+}
+
+@media (max-width: 1100px) {
+  .handoff-product {
+    z-index: 20;
+  }
+
+  .inside-sticky {
+    z-index: 36;
   }
 
 }

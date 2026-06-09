@@ -19,6 +19,7 @@ const chapterCards = Array.from(document.querySelectorAll("[data-chapter]"));
 const proofNumbers = Array.from(document.querySelectorAll("[data-count]"));
 const ritualVideos = Array.from(document.querySelectorAll(".ritual-video"));
 const heroContentSelector = ".hero-copy, .hero-actions";
+const headerChromeSelector = ".brand-link, .desktop-nav, .menu-toggle, .origin-stamp";
 
 const CONFIG = {
   // Video phase timestamps (seconds) — adjust when video asset changes
@@ -338,6 +339,11 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     gsap.set(".hero-glow", { autoAlpha: 1, opacity: 0.62 });
   }
 
+  function restoreTopContent() {
+    gsap.set(headerChromeSelector, { autoAlpha: 1, y: 0, clearProps: "visibility" });
+    gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+  }
+
   let initialHandoffGlowAnchored = false;
   let mobileHeroHandoffPosition = null;
 
@@ -365,7 +371,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
       heroHandoffTimeline.progress(0);
     }
     restoreHeroGlow();
-    gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+    restoreTopContent();
     if (!applyMobileHeroHandoffPosition()) {
       gsap.set(".handoff-video", {
         x: getHeroTimelineStartX(),
@@ -380,6 +386,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     const heroProgress = heroHandoffTimeline.scrollTrigger?.progress ?? 1;
     if (heroProgress <= 0.12) {
       restoreHeroGlow();
+      restoreTopContent();
     }
     if (isNarrowViewport()) {
       restoreMobileHeroStartState();
@@ -494,9 +501,10 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
           updateProductHandoffVisibility();
           if (self.progress <= 0.08) {
             restoreHeroGlow();
+            restoreTopContent();
           }
           if (isNarrowViewport()) {
-            gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+            restoreTopContent();
             if (
               !insideScrollTrigger?.isActive &&
               self.direction === -1 &&
@@ -543,10 +551,6 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
       0
     )
     .to(".hero-glow", { autoAlpha: 0, duration: 0.22, ease: "none" }, 0.08);
-
-  if (!isNarrowViewport()) {
-    heroHandoffTimeline.to(heroContentSelector, { autoAlpha: 0, y: -26, duration: 0.34, ease: "none" }, 0.34);
-  }
 
   // NOTE: onEnter/onLeave callbacks fire before onUpdate within a single GSAP
   // refresh cycle (GSAP 3.12.x). onUpdate's syncVideoToProgress therefore
@@ -683,7 +687,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     if (lenis && typeof lenis.resize === "function") lenis.resize();
     ScrollTrigger.refresh(true);
     if (isNarrowViewport()) {
-      gsap.set(heroContentSelector, { autoAlpha: 1, y: 0 });
+      restoreTopContent();
       updateProductHandoffVisibility();
     }
 
@@ -698,6 +702,7 @@ if (!prefersReducedMotion && gsap && ScrollTrigger) {
     heroHandoffTimeline.progress(heroProgress);
     if (heroProgress <= 0.08) {
       restoreHeroGlow();
+      restoreTopContent();
     }
     if (heroProgress <= 0.001) {
       if (!applyMobileHeroHandoffPosition()) {

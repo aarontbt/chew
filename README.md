@@ -181,3 +181,23 @@ Deployed via Vercel. Static site — no build step. Assets are served with 1-yea
 ## Full documentation
 
 See [`AGENTS.md`](AGENTS.md) for detailed technical documentation on the scroll system, video architecture, and animation phases.
+
+---
+
+## Owner to-do
+
+Notable loose ends before public launch, in priority order:
+
+1. **Domain — `chouxkie.com`** — referenced as canonical URL in OG tags, JSON-LD, and the `<link>` tag, but not yet pointed at Vercel. Add as a custom domain in the Vercel project dashboard and configure DNS.
+
+2. **OG image URLs** — all `og:image` entries reference `https://chew-one.vercel.app/...`. Swap to `https://chouxkie.com/...` once the domain is live.
+
+3. **Google Search Console** — `index.html` line 49 has a placeholder `content="REPLACE_WITH_SEARCH_CONSOLE_VERIFICATION_CODE"`. Register the domain and paste the real verification string.
+
+4. **Google Analytics (GA4)** — lines 51–60 are commented out with a placeholder `G-XXXXXXXXXX`. Uncomment and insert a real measurement ID.
+
+5. **Member count** — the First Bite Club pill shows `25 of 100` (hardcoded in `index.html`). Bump from actual WhatsApp signups as needed.
+
+6. **Trademark** — the footer asserts `CHOUXKIE™ is a trademark of Chew Bakehouse`. Confirm the filing is submitted (MyIPO Malaysia at minimum).
+
+<!-- TODO: strike items above as they're completed -->

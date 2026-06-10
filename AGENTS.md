@@ -31,6 +31,39 @@ The page starts with `body.is-loading` and a `.site-loader` overlay in `index.ht
 
 A 5.2s maximum timeout prevents the loader from trapping users on slow or failed video loads. `prefers-reduced-motion` disables the badge pulse, and the inline `<noscript>` style hides the loader when JavaScript is unavailable.
 
+### YouTube intro gate overlay
+
+After the preloader dismisses, `hideSiteLoader()` calls `showIntroOverlay()` before removing the `is-loading` state. This reveals a full-screen `.intro-overlay` (`z-index: 90`) centred on a 9:16 portrait YouTube Shorts video against a `--cream` background.
+
+Key constant:
+
+```js
+const INTRO_VIDEO_ID = 'vCjANDxKfQM';
+```
+
+Flow and functions:
+
+| Function | Role |
+|---|---|
+| `showIntroOverlay()` | Activates overlay, loads YouTube IFrame API, GSAP-entrance on buttons (back.out, stagger), focuses Close button |
+| `loadYouTubePlayer()` | Inserts YouTube IFrame API `<script>` or calls `createIntroPlayer()` if already loaded |
+| `createIntroPlayer()` | Creates `YT.Player` with `controls: 0`, `disablekb: 1`, `rel: 0`, `modestbranding: 1` |
+| `onIntroPlayerReady(event)` | Mutes and plays video on ready |
+| `onIntroPlayerStateChange(event)` | Auto-dismisses overlay when YT player reaches `ENDED` (state 0) |
+| `toggleIntroSound()` | Toggles mute/unmute, swaps button icon class `is-unmuted` |
+| `dismissIntro()` | Fades overlay, destroys YT player, scrolls to top, sets `introDismissed` flag |
+
+While active the body gets `class="intro-active"` which sets `overflow: hidden` to lock scrolling. The `.intro-frame-wrap` wrapper uses `pointer-events: none` (with a `::before` cover) to block YouTube's persistent hover overlays; the Close and Sound buttons re-enable clicks via `pointer-events: auto`.
+
+Dismissal triggers:
+- Video ends (auto)
+- Close button click
+- `Escape` key
+
+On dismissal the overlay fades out (`.is-dismissed`), the YouTube player is destroyed to save bandwidth, and `window.scrollTo(0, 0)` resets the page so the user starts at the hero.
+
+Mobile breakpoints (`560px`) shrink the button size. `prefers-reduced-motion` skips the GSAP button entrance and uses instant opacity transitions only.
+
 ### Scroll-scrubbed video system
 
 The core interaction is a transparent alpha product video scrubbed by scroll progress. The default source is `assets/chew-500-alpha.webm` for browsers that support VP9 alpha. Apple touch browsers (iPhone/iPad and touch iPadOS desktop mode) use `assets/chew-500-alpha.mov`, an Apple-native HEVC with Alpha fallback. Video tags intentionally use `data-src` and `data-ios-src`, not eager `src`, so iOS does not start loading the WebM before `script.js` chooses the correct source.
@@ -148,7 +181,8 @@ Typography: **Poppins** (headings, 700–900), **Inter** (body, 400–600), **Fr
 
 ## Section structure
 
-Sections in order with their IDs/anchors:
+Sections in order with their IDs/anchors (the intro gate appears before any scroll section):
+- **YouTube intro gate** — full-screen overlay, dismissed before scrolling begins
 1. `.hero` `#top` — hero with two CTAs
 2. `.inside-section` `#inside` — 500vh sticky scroll-scrub with 4 chapter cards
 3. `.obsession` `#invention` — espresso background, counting proof numbers (`[data-count]`)

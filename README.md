@@ -51,6 +51,21 @@ The page shows a centered `assets/badge.png` loader while the first product vide
 
 ---
 
+## YouTube intro gate
+
+After the preloader, a full-screen YouTube Shorts intro plays as a gate before the main page. The video is a 9:16 portrait embed (`controls: 0`) in a cream-background overlay with Close (X) and Sound toggle buttons. Auto-dismisses on video end; manually dismissible via Close or `Escape`. The overlay locks body scroll while active (`body.intro-active`).
+
+| File | Key element | Purpose |
+|---|---|---|
+| `index.html` | `#intro-overlay` | Container `role="dialog"`, `aria-modal="true"` |
+| `script.js` | `INTRO_VIDEO_ID = 'vCjANDxKfQM'` | YouTube video ID for the intro |
+| `script.js` | `showIntroOverlay()` → `dismissIntro()` | Lifecycle — reveal at preloader end, destroy on dismiss |
+| `styles.css` | `.intro-overlay` | Fixed full-screen, `z-index: 90`, cream background |
+
+Dismissal scrolls to top and destroys the YouTube player to save bandwidth.
+
+---
+
 ## Scroll-scrubbed video
 
 The core interaction is a transparent alpha product video scrubbed by scroll progress. The site uses:
@@ -132,6 +147,7 @@ mdls -name kMDItemCodecs -name kMDItemPixelWidth -name kMDItemPixelHeight assets
 
 | # | Section | Purpose |
 |---|---|---|
+| 00 | YouTube Intro Gate | Full-screen YouTube Shorts, dismissed before scrolling |
 | 01 | Hero | Introduce Chew as a new pastry category |
 | 02 | What's Inside | Scroll-scrubbed product reveal with four chapters |
 | 03 | Obsession Proof | Craft credibility — 200 doughs, 7 years, one shell |

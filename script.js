@@ -117,11 +117,12 @@ function waitForInitialVideos() {
 }
 
 function hideSiteLoader() {
-  document.body.classList.remove("is-loading");
-  document.body.classList.add("is-loaded");
+  document.body.classList.remove('is-loading');
+  document.body.classList.add('is-loaded');
   if (siteLoader) {
-    siteLoader.setAttribute("aria-hidden", "true");
+    siteLoader.setAttribute('aria-hidden', 'true');
   }
+  showIntroOverlay();
 }
 
 function setupSiteLoader() {
@@ -131,6 +132,140 @@ function setupSiteLoader() {
   const ready = Promise.all([minimumDisplay, waitForWindowLoad(), waitForInitialVideos()]);
 
   Promise.race([ready, maximumDisplay]).then(hideSiteLoader);
+}
+
+// ─── Intro overlay (YouTube video gate) ───
+
+const INTRO_VIDEO_ID = 'vCjANDxKfQM';
+let introDismissed = false;
+let introPlayer = null;
+let introPlayerReady = false;
+
+function showIntroOverlay() {
+  const overlay = document.getElementById('intro-overlay');
+  if (!overlay) return;
+
+  overlay.classList.add('is-active');
+  document.body.classList.add('intro-active');
+
+  // Load YouTube player via IFrame API — only now, not during preload
+  loadYouTubePlayer();
+
+  // GSAP entrance animations for close and sound buttons
+  if (!prefersReducedMotion && gsap) {
+    gsap.from('.intro-btn', {
+      autoAlpha: 0,
+      scale: 0.8,
+      duration: 0.35,
+      delay: 0.8,
+      ease: 'back.out(1.7)',
+      stagger: 0.1,
+    });
+  }
+
+  // Focus the Close button so keyboard users can dismiss immediately
+  window.setTimeout(() => {
+    const btn = document.getElementById('intro-close');
+    if (btn) btn.focus();
+  }, 200);
+}
+
+function loadYouTubePlayer() {
+  // YouTube IFrame API callback
+  const origCallback = window.onYouTubeIframeAPIReady;
+  window.onYouTubeIframeAPIReady = function () {
+    if (typeof origCallback === 'function') origCallback();
+    createIntroPlayer();
+  };
+
+  // Load the IFrame API script if not already requested
+  if (
+    !document.querySelector(
+      'script[src*="youtube.com/iframe_api"]'
+    )
+  ) {
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const first = document.getElementsByTagName('script')[0];
+    first.parentNode.insertBefore(tag, first);
+  } else if (window.YT && window.YT.Player && window.YT.loaded) {
+    // Already loaded — create player immediately
+    createIntroPlayer();
+  }
+}
+
+function createIntroPlayer() {
+  if (!document.getElementById('youtube-player')) return;
+
+  introPlayer = new YT.Player('youtube-player', {
+    videoId: INTRO_VIDEO_ID,
+    height: '100%',
+    width: '100%',
+    playerVars: {
+      autoplay: 1,
+      mute: 1,
+      playsinline: 1,
+      controls: 0,
+      disablekb: 1,
+      rel: 0,
+      modestbranding: 1,
+      iv_load_policy: 3,
+      fs: 0,
+      loop: 0,
+    },
+    events: {
+      onReady: onIntroPlayerReady,
+      onStateChange: onIntroPlayerStateChange,
+    },
+  });
+}
+
+function onIntroPlayerReady(event) {
+  introPlayerReady = true;
+  event.target.mute();
+  event.target.playVideo();
+}
+
+function onIntroPlayerStateChange(event) {
+  // YT.PlayerState.ENDED = 0 — auto-close when video finishes
+  if (event.data === 0) {
+    dismissIntro();
+  }
+}
+
+function toggleIntroSound() {
+  if (!introPlayer || !introPlayerReady) return;
+  const btn = document.getElementById('intro-sound');
+  if (introPlayer.isMuted()) {
+    introPlayer.unMute();
+    if (btn) btn.classList.add('is-unmuted');
+    if (btn) btn.setAttribute('aria-label', 'Mute');
+  } else {
+    introPlayer.mute();
+    if (btn) btn.classList.remove('is-unmuted');
+    if (btn) btn.setAttribute('aria-label', 'Unmute');
+  }
+}
+
+function dismissIntro() {
+  if (introDismissed) return;
+  introDismissed = true;
+
+  const overlay = document.getElementById('intro-overlay');
+  if (!overlay) return;
+
+  overlay.classList.add('is-dismissed');
+  document.body.classList.remove('intro-active');
+
+  // Destroy YouTube player to save bandwidth
+  if (introPlayer && typeof introPlayer.destroy === 'function') {
+    try { introPlayer.destroy(); } catch (_) {}
+    introPlayer = null;
+    introPlayerReady = false;
+  }
+
+  // Scroll to top so user starts at the hero
+  window.scrollTo(0, 0);
 }
 
 function fadeIn(target, opts = {}) {
@@ -750,6 +885,24 @@ window.addEventListener("load", () => {
     ScrollTrigger.refresh();
   }
 });
+
+// ─── Intro overlay event listeners ───
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.body.classList.contains('intro-active') && !introDismissed) {
+    dismissIntro();
+  }
+});
+
+const introClose = document.getElementById('intro-close');
+if (introClose) {
+  introClose.addEventListener('click', dismissIntro);
+}
+
+const introSound = document.getElementById('intro-sound');
+if (introSound) {
+  introSound.addEventListener('click', toggleIntroSound);
+}
 
 const menuToggle = document.querySelector(".menu-toggle");
 const mobileNav = document.querySelector(".mobile-nav");

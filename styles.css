@@ -144,6 +144,145 @@ button:focus-visible {
   }
 }
 
+/* ─── Intro overlay — centered portrait video with overlaid controls ─── */
+
+body.intro-active {
+  overflow: hidden;
+}
+
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: var(--cream);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+}
+
+.intro-overlay.is-active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.35s ease, visibility 0s linear 0s;
+}
+
+.intro-overlay.is-dismissed {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.35s ease, visibility 0s linear 0.35s;
+}
+
+/* Portrait video frame — fully visible, fits within viewport */
+.intro-frame-wrap {
+  position: relative;
+  z-index: 2;
+  width: min(92vw, calc(90vh * 9 / 16));
+  aspect-ratio: 9 / 16;
+  border-radius: 18px;
+  overflow: hidden;
+  pointer-events: none;  /* Block YouTube's hover overlays */
+}
+
+/* Transparent cover — hides YouTube's persistent UI elements inside the iframe */
+.intro-frame-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* YouTube iframe fills the wrapper */
+.intro-frame-wrap iframe,
+#youtube-player iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Top-right controls — close (X) and volume — inside the video frame */
+.intro-top-actions {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  pointer-events: none;
+}
+
+/* Shared dark button style — big, espresso, visible */
+.intro-btn {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--espresso);
+  color: var(--cream);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 3px 16px rgba(43, 30, 22, 0.25);
+  pointer-events: auto;  /* re-enable clicks for buttons */
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.intro-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 20px rgba(43, 30, 22, 0.35);
+}
+
+.intro-btn:active {
+  transform: scale(0.95);
+}
+
+.intro-btn:focus-visible {
+  outline: 3px solid var(--caramel);
+  outline-offset: 4px;
+}
+
+.intro-btn svg {
+  display: block;
+}
+
+/* Sound toggle icon states */
+.intro-sound .intro-sound-off { display: block; }
+.intro-sound .intro-sound-on { display: none; }
+.intro-sound.is-unmuted .intro-sound-off { display: none; }
+.intro-sound.is-unmuted .intro-sound-on { display: block; }
+
+@media (max-width: 560px) {
+  .intro-top-actions {
+    top: 16px;
+    right: 16px;
+    gap: 4px;
+  }
+
+  .intro-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .intro-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-overlay.is-active { opacity: 1; visibility: visible; }
+  .intro-overlay.is-dismissed { opacity: 0; visibility: hidden; }
+}
+
 .paper-grain {
   position: fixed;
   inset: 0;
